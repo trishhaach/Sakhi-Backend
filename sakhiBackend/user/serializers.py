@@ -24,3 +24,15 @@ class UserRegistrationSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+    def validate(self, data):
+        if 'email' not in data or 'password' not in data:
+            raise serializers.ValidationError({
+                'email': 'This field is required.',
+                'password': 'This field is required.'
+            })
+        return data
