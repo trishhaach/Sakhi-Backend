@@ -5,14 +5,10 @@ class UserRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     name = serializers.CharField(max_length=255)
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-    confirm_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-
-    class Meta:
-        model = User
-        fields = ['email', 'name', 'password', 'confirm_password']
+    confirmPassword = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     def validate(self, data):
-        if data['password'] != data['confirm_password']:
+        if data['password'] != data['confirmPassword']:
             raise serializers.ValidationError("Passwords do not match")
         return data
 
@@ -36,3 +32,4 @@ class UserLoginSerializer(serializers.Serializer):
                 'password': 'This field is required.'
             })
         return data
+
