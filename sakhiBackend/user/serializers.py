@@ -32,4 +32,7 @@ class UserLoginSerializer(serializers.Serializer):
                 'password': 'This field is required.'
             })
         return data
-
+    
+class UserProfileSerializer(serializers.Serializer):
+    email = serializers.EmailField(read_only=True)
+    name = serializers.CharField(read_only=True)

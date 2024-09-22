@@ -1,15 +1,18 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from user.serializers import UserRegistrationSerializer, UserLoginSerializer
+from user.serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
 from user.models import User
 from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
-from user.renderers import UserRenderer
+
+from rest_framework.permissions import IsAuthenticated
 
 # Generate Token Manually
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+    print(f"Generated refresh token: {str(refresh)}")  # Debug line
+    print(f"Generated access token: {str(refresh.access_token)}")  # Debug line
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -22,6 +25,7 @@ class UserRegistrationView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
+
             token = get_tokens_for_user(user)
             return Response({'token': token, 'msg': 'Registration Successful'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -34,11 +38,23 @@ class UserLoginView(APIView):
         if serializer.is_valid(raise_exception=True):
             email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
+            print(f"Trying to login with email: {email}")
             user = User.objects(email=email).first()
-
-            if user and user.check_password(password):
-                token = get_tokens_for_user(user)  
-                return Response({'token': token, 'msg': 'Login Success'}, status=status.HTTP_200_OK)
+            if user:
+                print("User found.")
+                if user.check_password(password):
+                    token = get_tokens_for_user(user)
+                    return Response({'token': token, 'msg': 'Login Success'}, status=status.HTTP_200_OK)
+                else:
+                    print("Invalid password.")
             else:
-                return Response({'errors': {'non_field_error': ['Email or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
-           
+                print("User not found.")
+            return Response({'errors': {'non_field_error': ['Email or Password is not Valid']}}, status=status.HTTP_401_UNAUTHORIZED)
+        
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data)
