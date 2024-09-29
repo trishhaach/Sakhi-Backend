@@ -37,18 +37,44 @@ class UserProfileSerializer(serializers.Serializer):
     email = serializers.EmailField(read_only=True)
     name = serializers.CharField(read_only=True)
 
+
 class UserChangePasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only=True)
-    confirmPassword = serializers.CharField(max_length=255, style= {'input_type':'password'}, write_only=True)
+    oldPassword = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+    newPassword = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+    confirmNewPassword = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+
     class Meta:
-        fields = ['password', 'confirmPassword']
+        fields = ['oldPassword', 'newPassword', 'confirmNewPassword']
 
     def validate(self, attrs):
-        password = attrs.get('password')
-        confirmPassword = attrs.get('confirmPassword')
+        old_password = attrs.get('oldPassword')
+        new_password = attrs.get('newPassword')
+        confirm_new_password = attrs.get('confirmNewPassword')
         user = self.context.get('user')
-        if password != confirmPassword:
-            raise serializers.ValidationError("Password and confirm password doesn't match")
-        user.set_password(password)
-        user.save()
+
+        # Check if the old password is correct
+        if not user.check_password(old_password):
+            raise serializers.ValidationError("Old password is not correct")
+
+        # Check if the new password matches the confirm password
+        if new_password != confirm_new_password:
+            raise serializers.ValidationError("New password and confirm new password don't match")
+
         return attrs
+
+    def save(self, **kwargs):
+        user = self.context.get('user')
+        new_password = self.validated_data.get('newPassword')
+        user.set_password(new_password)
+        user.save()
+        return user
+
+
+
+
+
+
+
+    
+    
+

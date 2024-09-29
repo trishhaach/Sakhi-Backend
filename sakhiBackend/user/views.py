@@ -11,8 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 # Generate Token Manually
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
-    print(f"Generated refresh token: {str(refresh)}")  # Debug line
-    print(f"Generated access token: {str(refresh.access_token)}")  # Debug line
+    print(f"Generated refresh token: {str(refresh)}")  
+    print(f"Generated access token: {str(refresh.access_token)}")  
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -65,5 +65,6 @@ class UserChangePasswordView(APIView):
     def post(self, request, format=None):
         serializer = UserChangePasswordSerializer(data=request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception=True):
+            serializer.save()
             return Response({'msg':'Password Changed Sucessfully'},status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
