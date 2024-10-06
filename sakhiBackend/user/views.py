@@ -1,11 +1,10 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from user.serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, UserChangePasswordSerializer
+from user.serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer
 from user.models import User
 from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from rest_framework.permissions import IsAuthenticated
 
 # Generate Token Manually
@@ -67,4 +66,24 @@ class UserChangePasswordView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({'msg':'Password Changed Sucessfully'},status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SendPasswordResetEmailView(APIView):
+    renderer_classes_classes = [UserRenderer]
+    def post(self, request, format=None):
+        seriallizer = SendPasswordResetEmailSerializer(data=request.data)
+        if seriallizer.is_valid(raise_exception=True):
+            return Response({'msg':'Password Reset link send. Please check your Email'}, status=status.HTTP_200_OK)
+        return Response(seriallizer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserPasswordResetView(APIView):
+    def post(self, request, uidb64, token, *args, **kwargs):
+        serializer = UserPasswordResetSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            try:
+                serializer.save(uidb64, token)
+                return Response({'success': 'Password reset successful.'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

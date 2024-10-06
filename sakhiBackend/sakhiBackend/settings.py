@@ -14,6 +14,9 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from mongoengine import connect
+from dotenv import load_dotenv
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -139,6 +142,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+load_dotenv()
+#Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_USER')        # Read email user from .env
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS')    # Read email password from .env
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER     # Default email from address
+
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -164,6 +178,8 @@ SIMPLE_JWT = {
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     
 }
+
+PASSWORD_RESET_TIMEOUT=900       #900 SEC=15 MIN
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",

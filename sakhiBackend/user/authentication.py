@@ -32,3 +32,4 @@ class CustomJWTAuthentication(JWTAuthentication):
             return user
         except User.DoesNotExist:
             raise AuthenticationFailed('User not found')
+  
