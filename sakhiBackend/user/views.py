@@ -6,6 +6,7 @@ from user.models import User
 from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from user.utils import Util
 
 # Generate Token Manually
 def get_tokens_for_user(user):
@@ -16,7 +17,7 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
-
+    
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
 
@@ -25,10 +26,22 @@ class UserRegistrationView(APIView):
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
 
+            # Generate token
             token = get_tokens_for_user(user)
+
+            # Send Welcome Email
+            body = f"Welcome to Sakhi! You have successfully signed up with us, {user.name}."
+            data = {
+                'subject': 'Welcome to Sakhi!',
+                'body': body,
+                'to_email': user.email
+            }
+            Util.send_email(data)
+
             return Response({'token': token, 'msg': 'Registration Successful'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
 
