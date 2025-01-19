@@ -87,7 +87,8 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email')
-        user = User.objects(email=email).first()  
+        # Correct query
+        user = User.objects.filter(email=email).first()  # Using filter instead of call
         if user:
             uid = urlsafe_base64_encode(force_bytes(user.id))
             print('Encoded UID', uid)
@@ -95,12 +96,13 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             print('Password Reset Token', token)
             link = f'http://localhost:3000/api/user/reset/{uid}/{token}'
             print('Password Reset Link', link)
-            #Send Email
-            body = 'Click following link to Reset Your Password '+ link
+
+            # Send email
+            body = 'Click following link to Reset Your Password ' + link
             data = {
-                'subject':'Reset Your Password',
+                'subject': 'Reset Your Password',
                 'body': body,
-                'to_email':user.email
+                'to_email': user.email
             }
             Util.send_email(data)
 

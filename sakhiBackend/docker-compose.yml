@@ -1,0 +1,31 @@
+# docker-compose.yml
+version: '3.9'
+
+services:
+  django:
+    build: .
+    container_name: sakhi_backend
+    command: ["gunicorn", "sakhiBackend.wsgi:application", "--bind", "0.0.0.0:8000"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
+  mongo:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: trishachaudhary
+      MONGO_INITDB_ROOT_PASSWORD: FIRSTDECEMBER2002
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

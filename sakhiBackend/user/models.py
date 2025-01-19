@@ -1,33 +1,43 @@
-from mongoengine import Document, fields
-from django.contrib.auth.hashers import make_password, check_password
-from datetime import datetime
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.db import models
 
-class User(Document):
-    email = fields.EmailField(required=True, unique=True)
-    name = fields.StringField(max_length=255, required=True)
-    password = fields.StringField(required=True)
-    is_active = fields.BooleanField(default=True)
-    is_admin = fields.BooleanField(default=False)
-    last_login = fields.DateTimeField(default=datetime.now)
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, name, password=None):
+        if not email:
+            raise ValueError("The Email field must be set")
+        user = self.model(email=email, name=name)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.password)
-    def get_email_field_name(self):
-        return 'email'
+    def create_superuser(self, email, name, password=None):
+        user = self.create_user(email, name, password)
+        user.is_admin = True
+        user.save(using=self._db)
+        return user
+
+
+class User(AbstractBaseUser):
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
+
+    def __str__(self):
+        return self.email
+
+    def has_perm(self, perm, obj=None):
+        return True
+
+    def has_module_perms(self, app_label):
+        return True
 
     @property
     def is_staff(self):
         return self.is_admin
-    
-    @property
-    def is_authenticated(self):
-        return True
-
-    meta = {
-        'collection': 'user',
-        'indexes': [
-            {'fields': ['email'], 'unique': True}
-        ]
-    }

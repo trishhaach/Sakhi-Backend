@@ -7,6 +7,7 @@ from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from user.utils import Util
+# from allauth.socialaccount.models import SocialAccount
 
 # Generate Token Manually
 def get_tokens_for_user(user):
@@ -51,7 +52,10 @@ class UserLoginView(APIView):
             email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
             print(f"Trying to login with email: {email}")
-            user = User.objects(email=email).first()
+            
+            # Corrected query to filter users by email
+            user = User.objects.filter(email=email).first()
+            
             if user:
                 print("User found.")
                 if user.check_password(password):
@@ -100,3 +104,25 @@ class UserPasswordResetView(APIView):
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class GoogleLoginCallbackView(APIView):
+#     permission_classes = [IsAuthenticated]  # Only authenticated users can hit this endpoint
+
+#     def get(self, request, *args, **kwargs):
+#         try:
+#             # Retrieve the social account (Google account) associated with the logged-in user
+#             social_account = SocialAccount.objects.get(user=request.user, provider='google')
+            
+#             # You can now create or retrieve the user from the SocialAccount
+#             user = social_account.user
+            
+#             # Generate tokens for the user
+#             refresh = RefreshToken.for_user(user)
+            
+#             # Return the JWT tokens
+#             return Response({
+#                 'access_token': str(refresh.access_token),
+#                 'refresh_token': str(refresh),
+#             }, status=200)
+#         except SocialAccount.DoesNotExist:
+#             return Response({'error': 'Google account is not linked'}, status=400)
