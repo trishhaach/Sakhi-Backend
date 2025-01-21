@@ -1,7 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
 import os
-from mongoengine import connect
 from dotenv import load_dotenv
 import dj_database_url
 import sys
@@ -28,7 +27,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'mongoengine',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -45,9 +43,8 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-SOCIALACCOUNT_ADAPTER = 'user.adapters.MongoAccountAdapter'
-ACCOUNT_ADAPTER = 'user.adapters.MongoAccountAdapter'  # Custom MongoDB account adapter
-
+SOCIALACCOUNT_ADAPTER = 'user.adapters.PostgreSQLAccountAdapter'
+ACCOUNT_ADAPTER = 'user.adapters.PostgreSQLAccountAdapter' 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
