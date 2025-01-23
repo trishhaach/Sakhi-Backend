@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'user',
     'drf_yasg',
     'channels',
+    'gunicorn',
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
