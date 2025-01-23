@@ -41,3 +41,39 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         return self.is_admin
+
+class NonClinicalDetection(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    skin_darkening = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    hair_growth = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    weight_gain = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    cycle_length = models.IntegerField()
+    fast_food = models.FloatField()
+    pimples = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    age = models.IntegerField()
+    bmi = models.FloatField()
+    prediction = models.CharField(max_length=255, null=True, blank=True)  # Store the prediction result
+
+    def __str__(self):
+        return f"Non-Clinical Detection for {self.user.name}"
+
+class AdvancedDetection(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    follicle_no_r = models.IntegerField()
+    follicle_no_l = models.IntegerField()
+    skin_darkening = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    hair_growth = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    weight_gain = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    cycle_length = models.IntegerField()
+    amh = models.FloatField()
+    fast_food = models.FloatField()
+    cycle_r_i = models.IntegerField(choices=[(0, 'Irregular'), (1, 'Regular')])
+    fsh_lh = models.FloatField()
+    prl = models.FloatField()
+    pimples = models.IntegerField(choices=[(0, 'No'), (1, 'Yes')])
+    age = models.IntegerField()
+    bmi = models.FloatField()
+    prediction = models.CharField(max_length=255, null=True, blank=True)  # Store the prediction result
+
+    def __str__(self):
+        return f"Advanced Detection for {self.user.name}"

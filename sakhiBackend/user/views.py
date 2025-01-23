@@ -1,12 +1,17 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from user.serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer
+from user.serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer, UserUpdateSerializer
 from user.models import User
 from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from user.utils import Util
+from .models import NonClinicalDetection, AdvancedDetection
+from .serializers import NonClinicalDetectionResultSerializer, AdvancedDetectionResultSerializer
+from user.serializers import NonClinicalDetectionSerializer, AdvancedDetectionSerializer
+from drf_yasg.utils import swagger_auto_schema
+
 # from allauth.socialaccount.models import SocialAccount
 
 # Generate Token Manually
@@ -126,3 +131,88 @@ class UserPasswordResetView(APIView):
 #             }, status=200)
 #         except SocialAccount.DoesNotExist:
 #             return Response({'error': 'Google account is not linked'}, status=400)
+
+
+# Non-Clinical Detection API
+class NonClinicalDetectionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        serializer = NonClinicalDetectionSerializer(data=request.data)
+        if serializer.is_valid():
+            # Save the detection result with the logged-in user
+            detection = serializer.save(user=request.user, prediction="PCOS Detected")
+            return Response({'msg': 'Non-Clinical Detection successful', 'prediction': detection.prediction}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Advanced Detection API
+class AdvancedDetectionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        serializer = AdvancedDetectionSerializer(data=request.data)
+        if serializer.is_valid():
+            # Save the detection result with the logged-in user
+            detection = serializer.save(user=request.user, prediction="PCOS Detected")
+            return Response({'msg': 'Advanced Detection successful', 'prediction': detection.prediction}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# View to get Non-Clinical Detection Results
+class NonClinicalDetectionResultsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        # Get the latest non-clinical detection result for the user
+        non_clinical_result = NonClinicalDetection.objects.filter(user=request.user).last()
+
+        if non_clinical_result:
+            # Return the non-clinical results in response
+            serializer = NonClinicalDetectionResultSerializer(non_clinical_result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'msg': 'No non-clinical detection result found'}, status=status.HTTP_404_NOT_FOUND)
+
+# View to get Advanced Detection Results
+class AdvancedDetectionResultsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        # Get the latest advanced detection result for the user
+        advanced_result = AdvancedDetection.objects.filter(user=request.user).last()
+
+        if advanced_result:
+            # Return the advanced results in response
+            serializer = AdvancedDetectionResultSerializer(advanced_result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'msg': 'No advanced detection result found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, format=None):
+        user = request.user
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)  # Only update the fields provided
+
+        if serializer.is_valid():
+            serializer.save()  # Save the updated user information
+            return Response({'msg': 'User name updated successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# API for Deleting User Account and Related Data
+class UserDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, format=None):
+        user = request.user
+
+        # Delete related data
+        NonClinicalDetection.objects.filter(user=user).delete()
+        AdvancedDetection.objects.filter(user=user).delete()
+
+        # Finally, delete the user account
+        user.delete()
+
+        return Response({'msg': 'User account and all related data deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)

@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 from .models import User
 from .utils import Util
+from .models import NonClinicalDetection, AdvancedDetection
 
 class UserRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -143,3 +144,37 @@ class UserPasswordResetSerializer(serializers.Serializer):
         user.set_password(self.validated_data['newPassword'])
         user.save()
         return user
+
+class NonClinicalDetectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NonClinicalDetection
+        fields = ['skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 'fast_food', 'pimples', 'age', 'bmi']
+
+class AdvancedDetectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdvancedDetection
+        fields = ['follicle_no_r', 'follicle_no_l', 'skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 
+                  'amh', 'fast_food', 'cycle_r_i', 'fsh_lh', 'prl', 'pimples', 'age', 'bmi']
+
+# Serializer to retrieve Non-Clinical Detection Results
+class NonClinicalDetectionResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NonClinicalDetection
+        fields = ['skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 'fast_food', 'pimples', 'age', 'bmi', 'prediction']
+
+# Serializer to retrieve Advanced Detection Results
+class AdvancedDetectionResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdvancedDetection
+        fields = ['follicle_no_r', 'follicle_no_l', 'skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 'amh', 'fast_food', 'cycle_r_i', 'fsh_lh', 'prl', 'pimples', 'age', 'bmi', 'prediction']
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name'] 
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.save()
+        return instance

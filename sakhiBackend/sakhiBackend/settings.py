@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 import dj_database_url
 import sys
 
+# Load environment variables
+load_dotenv()  # This should be called before any environment variable usage
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,6 +37,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'user',
+    'drf_yasg',
+    'channels',
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -158,6 +164,9 @@ PASSWORD_RESET_TIMEOUT = 900  # 900 seconds = 15 minutes
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8000",
+    "http://localhost:3000",  # React web app (development)
+    "http://127.0.0.1:3000",  # React web app (development, alternative URL)
+    "ws://127.0.0.1:55934",   # Flutter mobile app WebSocket connection
 ]
 
 AUTHENTICATION_BACKENDS = (

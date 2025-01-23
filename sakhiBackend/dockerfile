@@ -20,6 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project into the container
 COPY . /app/
 
+# Copy the .env file to the container
+COPY .env /app/
+
 # Set environment variables for Django
 ENV DJANGO_SETTINGS_MODULE=sakhiBackend.settings
 
