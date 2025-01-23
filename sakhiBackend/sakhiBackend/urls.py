@@ -15,10 +15,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path 
+from user.consumers import ChatConsumer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/user/', include('user.urls')),
     path('accounts/', include('allauth.urls')),
+]
+
+websocket_urlpatterns = [
+    re_path(r'ws/some_path/$', ChatConsumer.as_asgi()),
 ]

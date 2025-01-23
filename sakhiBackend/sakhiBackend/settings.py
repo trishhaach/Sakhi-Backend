@@ -169,6 +169,18 @@ CORS_ALLOWED_ORIGINS = [
     "ws://127.0.0.1:55934",   # Flutter mobile app WebSocket connection
 ]
 
+ASGI_APPLICATION = 'sakhiBackend.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Make sure Redis is running
+        },
+    },
+}
+
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',  # This enables allauth login
