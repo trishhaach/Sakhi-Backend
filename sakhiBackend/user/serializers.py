@@ -150,10 +150,11 @@ class NonClinicalDetectionSerializer(serializers.ModelSerializer):
         model = NonClinicalDetection
         fields = ['skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 'fast_food', 'pimples', 'age', 'bmi']
 
+
 class AdvancedDetectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdvancedDetection
-        fields = ['follicle_no_r', 'follicle_no_l', 'skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length', 
+        fields = ['follicle_no_r', 'follicle_no_l', 'skin_darkening', 'hair_growth', 'weight_gain', 'cycle_length',
                   'amh', 'fast_food', 'cycle_r_i', 'fsh_lh', 'prl', 'pimples', 'age', 'bmi']
 
 # Serializer to retrieve Non-Clinical Detection Results

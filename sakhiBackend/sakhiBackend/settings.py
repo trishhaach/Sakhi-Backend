@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 SECRET_KEY = 'django-insecure-v-#1y3)ajdaytnz^@m%$e$j%+*2s!sdf!#hzpym&e7$_hx-&3='
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -129,7 +129,10 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -145,7 +148,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER     
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
@@ -168,6 +171,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React web app (development)
     "http://127.0.0.1:3000",  # React web app (development, alternative URL)
     "ws://127.0.0.1:55934",   # Flutter mobile app WebSocket connection
+    "https://sakhi-backend-tagn.onrender.com",
 ]
 
 ASGI_APPLICATION = 'sakhiBackend.asgi.application'

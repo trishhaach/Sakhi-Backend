@@ -17,12 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include, re_path 
 from user.consumers import ChatConsumer
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/user/', include('user.urls')),
     path('accounts/', include('allauth.urls')),
 ]
+
+# Add the static files serving logic
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 websocket_urlpatterns = [
     re_path(r'ws/some_path/$', ChatConsumer.as_asgi()),

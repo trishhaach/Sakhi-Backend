@@ -19,6 +19,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from user.views import NonClinicalDetectionView, AdvancedDetectionView
 from .views import NonClinicalDetectionResultsView, AdvancedDetectionResultsView
+from rest_framework.permissions import AllowAny
 
 # API Documentation setup
 schema_view = get_schema_view(
@@ -31,6 +32,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="MIT License"),
     ),
     public=True,
+    permission_classes=[AllowAny]  # Allow any user to access docs
 )
 
 urlpatterns = [

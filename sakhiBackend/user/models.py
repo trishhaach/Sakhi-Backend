@@ -53,9 +53,11 @@ class NonClinicalDetection(models.Model):
     age = models.IntegerField()
     bmi = models.FloatField()
     prediction = models.CharField(max_length=255, null=True, blank=True)  # Store the prediction result
+    prediction_probability = models.FloatField(null=True, blank=True)  # Store the prediction probability
 
     def __str__(self):
         return f"Non-Clinical Detection for {self.user.name}"
+
 
 class AdvancedDetection(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
