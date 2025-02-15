@@ -13,6 +13,11 @@ from user.serializers import NonClinicalDetectionSerializer, AdvancedDetectionSe
 from drf_yasg.utils import swagger_auto_schema
 import requests
 import logging
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+
 
 # from allauth.socialaccount.models import SocialAccount
 
@@ -92,13 +97,48 @@ class UserChangePasswordView(APIView):
             return Response({'msg':'Password Changed Sucessfully'},status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# class SendPasswordResetEmailView(APIView):
+#     renderer_classes_classes = [UserRenderer]
+#     def post(self, request, format=None):
+#         seriallizer = SendPasswordResetEmailSerializer(data=request.data)
+#         if seriallizer.is_valid(raise_exception=True):
+#             return Response({'msg':'Password Reset link send. Please check your Email'}, status=status.HTTP_200_OK)
+#         return Response(seriallizer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class SendPasswordResetEmailView(APIView):
-    renderer_classes_classes = [UserRenderer]
+    renderer_classes = [UserRenderer]
+    
     def post(self, request, format=None):
-        seriallizer = SendPasswordResetEmailSerializer(data=request.data)
-        if seriallizer.is_valid(raise_exception=True):
-            return Response({'msg':'Password Reset link send. Please check your Email'}, status=status.HTTP_200_OK)
-        return Response(seriallizer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SendPasswordResetEmailSerializer(data=request.data)
+        
+        if serializer.is_valid(raise_exception=True):
+            email = serializer.validated_data['email']
+            
+            # Generate reset token and uidb64 for the user
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            
+            # Construct the password reset URL (use your frontend's domain here)
+            frontend_url = f"http://localhost:3000/reset-password/{uidb64}/{token}"
+            
+            # Send email with the reset URL
+            body = f"Click the link below to reset your password:\n\n{frontend_url}"
+            data = {
+                'subject': 'Password Reset Request',
+                'body': body,
+                'to_email': email
+            }
+            Util.send_email(data)
+            
+            return Response({'msg': 'Password reset link sent. Please check your email'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserPasswordResetView(APIView):

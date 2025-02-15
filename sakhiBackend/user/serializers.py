@@ -1,4 +1,3 @@
-from xml.dom import ValidationErr
 from rest_framework import serializers
 from user.models import User
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -6,9 +5,8 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
-from .models import User
-from .utils import Util
 from .models import NonClinicalDetection, AdvancedDetection
+from .utils import Util
 
 class UserRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -95,7 +93,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             print('Encoded UID', uid)
             token = PasswordResetTokenGenerator().make_token(user)
             print('Password Reset Token', token)
-            link = f'http://localhost:3000/api/user/reset/{uid}/{token}'
+            link = f'http://localhost:3000/reset-password/{uid}/{token}'
             print('Password Reset Link', link)
 
             # Send email
@@ -179,3 +177,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.save()
         return instance
+
+
+
+
