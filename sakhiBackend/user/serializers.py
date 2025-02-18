@@ -5,8 +5,11 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
-from .models import NonClinicalDetection, AdvancedDetection
+from .models import NonClinicalDetection, AdvancedDetection, Period
 from .utils import Util
+from .models import SymptomCategory, Symptom
+from .models import SymptomTrack
+import logging
 
 class UserRegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -179,5 +182,34 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
+class TrackPeriodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Period
+        fields = ['user', 'period_date']
+
+class TrackPeriodHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Period
+        fields = ['user', 'period_date']
+
+class SymptomCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SymptomCategory
+        fields = ['id', 'name']
 
 
+class SymptomSerializer(serializers.ModelSerializer):
+    category = SymptomCategorySerializer()
+
+    class Meta:
+        model = Symptom
+        fields = ['id', 'name', 'category']
+
+
+
+
+class SymptomTrackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SymptomTrack
+        fields = ['user', 'period', 'symptom']  # Add the fields you want to expose in the API
+        read_only_fields = ['user']  # Assuming the user is set automatically based on the request

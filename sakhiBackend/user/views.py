@@ -7,8 +7,8 @@ from user.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from user.utils import Util
-from .models import NonClinicalDetection, AdvancedDetection
-from .serializers import NonClinicalDetectionResultSerializer, AdvancedDetectionResultSerializer
+from .models import NonClinicalDetection, AdvancedDetection, Period
+from .serializers import NonClinicalDetectionResultSerializer, AdvancedDetectionResultSerializer, TrackPeriodSerializer, TrackPeriodHistorySerializer
 from user.serializers import NonClinicalDetectionSerializer, AdvancedDetectionSerializer
 from drf_yasg.utils import swagger_auto_schema
 import requests
@@ -16,7 +16,14 @@ import logging
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-
+from datetime import timedelta
+from django.utils import timezone
+from .models import SymptomCategory, Symptom
+from .models import SymptomTrack
+from .serializers import SymptomCategorySerializer, SymptomSerializer
+from .serializers import SymptomTrackSerializer
+from rest_framework import status, generics
+from rest_framework import serializers
 
 
 # from allauth.socialaccount.models import SocialAccount
@@ -442,3 +449,124 @@ class UserDeleteView(APIView):
         user.delete()
 
         return Response({'msg': 'User account and all related data deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+    
+
+class TrackPeriodCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Automatically get the current authenticated user
+        user = request.user
+        
+        # Add the user to the request data (this avoids the need to pass 'user' in the body)
+        request.data['user'] = user.id
+
+        # Serialize the data
+        serializer = TrackPeriodSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Save the period data
+            serializer.save()
+
+            # After saving, predict the next period (you can adjust this logic as needed)
+            periods = Period.objects.filter(user=user).order_by('period_date')
+            
+            if periods.count() > 1:
+                # Calculate the average cycle length from multiple periods
+                cycle_lengths = []
+                for i in range(1, len(periods)):
+                    cycle_length = (periods[i].period_date - periods[i-1].period_date).days
+                    cycle_lengths.append(cycle_length)
+                average_cycle_length = sum(cycle_lengths) // len(cycle_lengths)
+            else:
+                # Use a default cycle length for new users
+                average_cycle_length = 28  # Default 28 days
+            
+            # Predict the next period date
+            last_period_date = periods.last().period_date
+            next_period_date = last_period_date + timedelta(days=average_cycle_length)
+
+            return Response({'next_period_date': next_period_date}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class TrackPeriodRetrieveView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure that the user is authenticated
+
+    def get(self, request):
+        user = request.user  # The authenticated user
+
+        # Fetch the periods for the authenticated user
+        periods = Period.objects.filter(user=user).order_by('period_date')
+
+        # Check if there are any periods
+        if not periods.exists():
+            return Response({"detail": "No period data found for the user."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize the period data using the TrackPeriodHistorySerializer
+        serializer = TrackPeriodHistorySerializer(periods, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SymptomCategoryListView(generics.ListAPIView):
+    """API to get the list of symptom categories."""
+    queryset = SymptomCategory.objects.all()
+    serializer_class = SymptomCategorySerializer
+
+
+class SymptomListView(generics.ListAPIView):
+    """API to get symptoms by category."""
+    serializer_class = SymptomSerializer
+
+    def get_queryset(self):
+        category_id = self.kwargs['category_id']
+        return Symptom.objects.filter(category_id=category_id)
+
+
+
+
+
+class SymptomTrackCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        period_date = request.data.get('period_date')  # Assuming period_date is provided in request
+        symptoms = request.data.get('symptoms', [])  # List of symptom IDs
+
+        if not period_date or not symptoms:
+            return Response({"detail": "Period date and symptoms are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch the Period object based on the period_date and the authenticated user
+        try:
+            period = Period.objects.get(user=user, period_date=period_date)
+        except Period.DoesNotExist:
+            return Response({"detail": "Period not found for the user."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Loop through the symptoms and create SymptomTrack entries
+        for symptom_id in symptoms:
+            try:
+                symptom = Symptom.objects.get(id=symptom_id)
+            except Symptom.DoesNotExist:
+                return Response({"detail": f"Symptom with ID {symptom_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Create the SymptomTrack object
+            SymptomTrack.objects.create(user=user, period=period, symptom=symptom)
+
+        return Response({"detail": "Symptoms logged successfully."}, status=status.HTTP_201_CREATED)
+    
+
+
+
+
+class SymptomTrackListView(generics.ListAPIView):
+    """API to list all tracked symptoms of a user."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = SymptomTrackSerializer
+
+    def get_queryset(self):
+        # Fetch symptoms tracked by the current authenticated user, ordered by the related period's period_date
+        return SymptomTrack.objects.filter(user=self.request.user).order_by('-period__period_date')

@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.contrib.auth import get_user_model
+from datetime import datetime
+from django.utils import timezone
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, name, password=None):
@@ -79,3 +83,42 @@ class AdvancedDetection(models.Model):
 
     def __str__(self):
         return f"Advanced Detection for {self.user.name}"
+    
+class Period(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    period_date = models.DateField()
+    
+    def __str__(self):
+        return f"User: {self.user.name}, Period Date: {self.period_date}"
+
+    class Meta:
+        ordering = ['period_date']
+
+
+class SymptomCategory(models.Model):
+    """Categories for symptoms."""
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class Symptom(models.Model):
+    """This model stores different types of symptoms."""
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
+
+
+class SymptomTrack(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    period = models.ForeignKey(Period, on_delete=models.CASCADE)
+    symptom = models.ForeignKey(Symptom, on_delete=models.CASCADE)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Symptom {self.symptom.name} for {self.user.name} on {self.period.period_date}"
+
+    class Meta:
+        unique_together = ('user', 'period', 'symptom')  # Prevent the same user from logging the same symptom twice in the same period
