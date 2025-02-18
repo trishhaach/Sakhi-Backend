@@ -106,7 +106,8 @@ class SymptomCategory(models.Model):
 class Symptom(models.Model):
     """This model stores different types of symptoms."""
     name = models.CharField(max_length=100)
-    
+    category = models.ForeignKey(SymptomCategory, on_delete=models.CASCADE, related_name="symptoms")
+
     def __str__(self):
         return self.name
 

@@ -523,7 +523,8 @@ class SymptomListView(generics.ListAPIView):
 
     def get_queryset(self):
         category_id = self.kwargs['category_id']
-        return Symptom.objects.filter(category_id=category_id)
+        return Symptom.objects.filter(category_id=category_id)  # Now valid because category exists
+
 
 
 
