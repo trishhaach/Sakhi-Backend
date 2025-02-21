@@ -183,62 +183,153 @@ class UserPasswordResetView(APIView):
 #             return Response({'error': 'Google account is not linked'}, status=400)
 
 
+# logger = logging.getLogger(__name__)
+
+# class NonClinicalDetectionView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, format=None):
+#         # Deserialize the input data
+#         serializer = NonClinicalDetectionSerializer(data=request.data)
+#         if serializer.is_valid():
+#             # Prepare the input data to send to the ML model
+#             detection_data = serializer.validated_data
+#             model_input = {
+#                 "skin_darkening": detection_data["skin_darkening"],
+#                 "hair_growth": detection_data["hair_growth"],
+#                 "weight_gain": detection_data["weight_gain"],
+#                 "cycle_length": detection_data["cycle_length"],  # Ensure this is added here
+#                 "fast_food": detection_data["fast_food"],
+#                 "pimples": detection_data["pimples"],
+#                 "age": detection_data["age"],
+#                 "bmi": detection_data["bmi"]
+#             }
+
+#             # Define the URL for the ML model API
+#             url = "https://appledog00-nonclinical-prediction.hf.space/predict"
+#             headers = {
+#                 'Content-Type': 'application/json'
+#             }
+
+#             try:
+#                 # Make the request to the model API
+#                 response = requests.post(url, json=model_input, headers=headers)
+
+#                 # Log the response status code and content for debugging
+#                 logger.info(f"Model API response: {response.status_code}, {response.text}")
+
+#                 # Check if the response is successful
+#                 if response.status_code == 200:
+#                     prediction = response.json()
+
+#                     # Ensure the prediction contains the required fields
+#                     predicted_class = prediction.get('predicted_class')
+#                     prediction_probability = prediction.get('prediction_probability_for_class_1')
+
+#                     if predicted_class is None or prediction_probability is None:
+#                         logger.error(f"Missing prediction data in response: {response.text}")
+#                         return Response({
+#                             'error': 'Prediction data is missing from the model response'
+#                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#                     # Save the detection result in the database
+#                     detection = NonClinicalDetection.objects.create(
+#                         user=request.user,
+#                         skin_darkening=detection_data["skin_darkening"],
+#                         hair_growth=detection_data["hair_growth"],
+#                         weight_gain=detection_data["weight_gain"],
+#                         cycle_length=detection_data["cycle_length"],  # Ensure cycle_length is included here
+#                         fast_food=detection_data["fast_food"],
+#                         pimples=detection_data["pimples"],
+#                         age=detection_data["age"],
+#                         bmi=detection_data["bmi"],
+#                         prediction="PCOS Detected" if predicted_class == 1 else "No PCOS Detected",
+#                         prediction_probability=prediction_probability
+#                     )
+
+#                     # Return the successful response with prediction and probability
+#                     return Response({
+#                         'msg': 'Non-Clinical Detection successful',
+#                         'prediction': detection.prediction,
+#                         'probability': detection.prediction_probability
+#                     }, status=status.HTTP_201_CREATED)
+
+#                 else:
+#                     # If the model API returns an error, log it and return a 500 response
+#                     logger.error(f"Error from ML model: {response.status_code} - {response.text}")
+#                     return Response({
+#                         'error': 'Error communicating with the ML model'
+#                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#             except requests.exceptions.Timeout:
+#                 # Handle timeout exception specifically
+#                 logger.error("Request to the ML model timed out")
+#                 return Response({
+#                     'error': 'The request to the ML model timed out'
+#                 }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+
+#             except requests.exceptions.ConnectionError:
+#                 # Handle connection error specifically
+#                 logger.error("Connection error while trying to reach the ML model")
+#                 return Response({
+#                     'error': 'Unable to connect to the ML model'
+#                 }, status=status.HTTP_502_BAD_GATEWAY)
+
+#             except requests.exceptions.RequestException as e:
+#                 # General request exception handling
+#                 logger.error(f"RequestException occurred: {str(e)}")
+#                 return Response({
+#                     'error': f'An error occurred while contacting the ML model: {str(e)}'
+#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         # If serializer is invalid, return a 400 response with errors
+#         logger.error(f"Invalid input data: {serializer.errors}")
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 logger = logging.getLogger(__name__)
 
 class NonClinicalDetectionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        # Deserialize the input data
         serializer = NonClinicalDetectionSerializer(data=request.data)
         if serializer.is_valid():
-            # Prepare the input data to send to the ML model
             detection_data = serializer.validated_data
             model_input = {
                 "skin_darkening": detection_data["skin_darkening"],
                 "hair_growth": detection_data["hair_growth"],
                 "weight_gain": detection_data["weight_gain"],
-                "cycle_length": detection_data["cycle_length"],  # Ensure this is added here
+                "cycle_length": detection_data["cycle_length"],
                 "fast_food": detection_data["fast_food"],
                 "pimples": detection_data["pimples"],
                 "age": detection_data["age"],
                 "bmi": detection_data["bmi"]
             }
 
-            # Define the URL for the ML model API
             url = "https://appledog00-nonclinical-prediction.hf.space/predict"
-            headers = {
-                'Content-Type': 'application/json'
-            }
+            headers = {'Content-Type': 'application/json'}
 
             try:
-                # Make the request to the model API
                 response = requests.post(url, json=model_input, headers=headers)
-
-                # Log the response status code and content for debugging
                 logger.info(f"Model API response: {response.status_code}, {response.text}")
 
-                # Check if the response is successful
                 if response.status_code == 200:
                     prediction = response.json()
-
-                    # Ensure the prediction contains the required fields
                     predicted_class = prediction.get('predicted_class')
                     prediction_probability = prediction.get('prediction_probability_for_class_1')
 
                     if predicted_class is None or prediction_probability is None:
                         logger.error(f"Missing prediction data in response: {response.text}")
-                        return Response({
-                            'error': 'Prediction data is missing from the model response'
-                        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({'error': 'Prediction data is missing from the model response'},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                    # Save the detection result in the database
                     detection = NonClinicalDetection.objects.create(
                         user=request.user,
                         skin_darkening=detection_data["skin_darkening"],
                         hair_growth=detection_data["hair_growth"],
                         weight_gain=detection_data["weight_gain"],
-                        cycle_length=detection_data["cycle_length"],  # Ensure cycle_length is included here
+                        cycle_length=detection_data["cycle_length"],
                         fast_food=detection_data["fast_food"],
                         pimples=detection_data["pimples"],
                         age=detection_data["age"],
@@ -247,47 +338,144 @@ class NonClinicalDetectionView(APIView):
                         prediction_probability=prediction_probability
                     )
 
-                    # Return the successful response with prediction and probability
+                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else ""
+
                     return Response({
                         'msg': 'Non-Clinical Detection successful',
                         'prediction': detection.prediction,
-                        'probability': detection.prediction_probability
+                        'probability': detection.prediction_probability,
+                        'advice': message
                     }, status=status.HTTP_201_CREATED)
 
                 else:
-                    # If the model API returns an error, log it and return a 500 response
                     logger.error(f"Error from ML model: {response.status_code} - {response.text}")
-                    return Response({
-                        'error': 'Error communicating with the ML model'
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({'error': 'Error communicating with the ML model'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             except requests.exceptions.Timeout:
-                # Handle timeout exception specifically
                 logger.error("Request to the ML model timed out")
-                return Response({
-                    'error': 'The request to the ML model timed out'
-                }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+                return Response({'error': 'The request to the ML model timed out'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
 
             except requests.exceptions.ConnectionError:
-                # Handle connection error specifically
                 logger.error("Connection error while trying to reach the ML model")
-                return Response({
-                    'error': 'Unable to connect to the ML model'
-                }, status=status.HTTP_502_BAD_GATEWAY)
+                return Response({'error': 'Unable to connect to the ML model'}, status=status.HTTP_502_BAD_GATEWAY)
 
             except requests.exceptions.RequestException as e:
-                # General request exception handling
                 logger.error(f"RequestException occurred: {str(e)}")
-                return Response({
-                    'error': f'An error occurred while contacting the ML model: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': f'An error occurred while contacting the ML model: {str(e)}'},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # If serializer is invalid, return a 400 response with errors
         logger.error(f"Invalid input data: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+# logger = logging.getLogger(__name__)
+
+# class AdvancedDetectionView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, format=None):
+#         serializer = AdvancedDetectionSerializer(data=request.data)
+#         if serializer.is_valid():
+#             # Prepare the input data to send to the ML model
+#             detection_data = serializer.validated_data
+#             model_input = {
+#                 "Follicle_No_R": detection_data["follicle_no_r"],
+#                 "Follicle_No_L": detection_data["follicle_no_l"],
+#                 "Skin_darkening": detection_data["skin_darkening"],
+#                 "hair_growth": detection_data["hair_growth"],
+#                 "Weight_gain": detection_data["weight_gain"],
+#                 "Cycle_length": detection_data["cycle_length"],
+#                 "AMH": detection_data["amh"],
+#                 "Fast_food": detection_data["fast_food"],
+#                 "Cycle_R_I": detection_data["cycle_r_i"],
+#                 "FSH_LH": detection_data["fsh_lh"],
+#                 "PRL": detection_data["prl"],
+#                 "Pimples": detection_data["pimples"],
+#                 "Age": detection_data["age"],
+#                 "BMI": detection_data["bmi"]
+#             }
+
+#             # Define the URL for the ML model API
+#             url = "https://appledog00-Project-Sakhii.hf.space/predict/"
+#             headers = {'Content-Type': 'application/json'}
+
+#             try:
+#                 # Make the request to the model API
+#                 response = requests.post(url, json=model_input, headers=headers)
+#                 logger.info(f"Model API response: {response.status_code}, {response.text}")
+
+#                 if response.status_code == 200:
+#                     prediction = response.json()
+
+#                     # Extract the prediction data from the API response
+#                     predicted_class = prediction.get('prediction')  # Now use 'prediction' instead of 'predicted_class'
+#                     prediction_probability = prediction.get('probability')  # Now use 'probability' instead of 'prediction_probability'
+
+#                     if predicted_class is None or prediction_probability is None:
+#                         logger.error(f"Missing prediction data in response: {response.text}")
+#                         return Response({
+#                             'error': 'Prediction data is missing from the model response'
+#                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#                     # Save the detection result in the database
+#                     detection = AdvancedDetection.objects.create(
+#                         user=request.user,
+#                         follicle_no_r=detection_data["follicle_no_r"],
+#                         follicle_no_l=detection_data["follicle_no_l"],
+#                         skin_darkening=detection_data["skin_darkening"],
+#                         hair_growth=detection_data["hair_growth"],
+#                         weight_gain=detection_data["weight_gain"],
+#                         cycle_length=detection_data["cycle_length"],
+#                         amh=detection_data["amh"],
+#                         fast_food=detection_data["fast_food"],
+#                         cycle_r_i=detection_data["cycle_r_i"],
+#                         fsh_lh=detection_data["fsh_lh"],
+#                         prl=detection_data["prl"],
+#                         pimples=detection_data["pimples"],
+#                         age=detection_data["age"],
+#                         bmi=detection_data["bmi"],
+#                         prediction="PCOS Detected" if predicted_class == 1 else "No PCOS Detected",
+#                     )
+
+#                     # Return the successful response with prediction and probability
+#                     return Response({
+#                         'msg': 'Advanced Detection successful',
+#                         'prediction': detection.prediction,
+#                         'probability': prediction_probability
+#                     }, status=status.HTTP_201_CREATED)
+
+#                 else:
+#                     # If the model API returns an error, log it and return a 500 response
+#                     logger.error(f"Error from ML model: {response.status_code} - {response.text}")
+#                     return Response({
+#                         'error': 'Error communicating with the ML model'
+#                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#             except requests.exceptions.Timeout:
+#                 logger.error("Request to the ML model timed out")
+#                 return Response({
+#                     'error': 'The request to the ML model timed out'
+#                 }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+
+#             except requests.exceptions.ConnectionError:
+#                 logger.error("Connection error while trying to reach the ML model")
+#                 return Response({
+#                     'error': 'Unable to connect to the ML model'
+#                 }, status=status.HTTP_502_BAD_GATEWAY)
+
+#             except requests.exceptions.RequestException as e:
+#                 logger.error(f"RequestException occurred: {str(e)}")
+#                 return Response({
+#                     'error': f'An error occurred while contacting the ML model: {str(e)}'
+#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         # If serializer is invalid, return a 400 response with errors
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 logger = logging.getLogger(__name__)
+
 
 class AdvancedDetectionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -295,7 +483,6 @@ class AdvancedDetectionView(APIView):
     def post(self, request, format=None):
         serializer = AdvancedDetectionSerializer(data=request.data)
         if serializer.is_valid():
-            # Prepare the input data to send to the ML model
             detection_data = serializer.validated_data
             model_input = {
                 "Follicle_No_R": detection_data["follicle_no_r"],
@@ -314,29 +501,23 @@ class AdvancedDetectionView(APIView):
                 "BMI": detection_data["bmi"]
             }
 
-            # Define the URL for the ML model API
             url = "https://appledog00-Project-Sakhii.hf.space/predict/"
             headers = {'Content-Type': 'application/json'}
 
             try:
-                # Make the request to the model API
                 response = requests.post(url, json=model_input, headers=headers)
                 logger.info(f"Model API response: {response.status_code}, {response.text}")
 
                 if response.status_code == 200:
                     prediction = response.json()
-
-                    # Extract the prediction data from the API response
-                    predicted_class = prediction.get('prediction')  # Now use 'prediction' instead of 'predicted_class'
-                    prediction_probability = prediction.get('probability')  # Now use 'probability' instead of 'prediction_probability'
+                    predicted_class = prediction.get('prediction')
+                    prediction_probability = prediction.get('probability')
 
                     if predicted_class is None or prediction_probability is None:
                         logger.error(f"Missing prediction data in response: {response.text}")
-                        return Response({
-                            'error': 'Prediction data is missing from the model response'
-                        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({'error': 'Prediction data is missing from the model response'},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                    # Save the detection result in the database
                     detection = AdvancedDetection.objects.create(
                         user=request.user,
                         follicle_no_r=detection_data["follicle_no_r"],
@@ -356,40 +537,34 @@ class AdvancedDetectionView(APIView):
                         prediction="PCOS Detected" if predicted_class == 1 else "No PCOS Detected",
                     )
 
-                    # Return the successful response with prediction and probability
+                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else ""
+
                     return Response({
                         'msg': 'Advanced Detection successful',
                         'prediction': detection.prediction,
-                        'probability': prediction_probability
+                        'probability': prediction_probability,
+                        'advice': message
                     }, status=status.HTTP_201_CREATED)
 
                 else:
-                    # If the model API returns an error, log it and return a 500 response
                     logger.error(f"Error from ML model: {response.status_code} - {response.text}")
-                    return Response({
-                        'error': 'Error communicating with the ML model'
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({'error': 'Error communicating with the ML model'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             except requests.exceptions.Timeout:
                 logger.error("Request to the ML model timed out")
-                return Response({
-                    'error': 'The request to the ML model timed out'
-                }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+                return Response({'error': 'The request to the ML model timed out'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
 
             except requests.exceptions.ConnectionError:
                 logger.error("Connection error while trying to reach the ML model")
-                return Response({
-                    'error': 'Unable to connect to the ML model'
-                }, status=status.HTTP_502_BAD_GATEWAY)
+                return Response({'error': 'Unable to connect to the ML model'}, status=status.HTTP_502_BAD_GATEWAY)
 
             except requests.exceptions.RequestException as e:
                 logger.error(f"RequestException occurred: {str(e)}")
-                return Response({
-                    'error': f'An error occurred while contacting the ML model: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': f'An error occurred while contacting the ML model: {str(e)}'},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # If serializer is invalid, return a 400 response with errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # View to get Non-Clinical Detection Results
 class NonClinicalDetectionResultsView(APIView):
