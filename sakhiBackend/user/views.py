@@ -24,6 +24,7 @@ from .serializers import SymptomCategorySerializer, SymptomSerializer
 from .serializers import SymptomTrackSerializer
 from rest_framework import status, generics
 from rest_framework import serializers
+from django.db import transaction
 
 
 # from allauth.socialaccount.models import SocialAccount
@@ -541,21 +542,24 @@ class SymptomTrackCreateView(APIView):
         if not period_date or not symptoms:
             return Response({"detail": "Period date and symptoms are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch the Period object based on the period_date and the authenticated user
-        try:
-            period = Period.objects.get(user=user, period_date=period_date)
-        except Period.DoesNotExist:
+        # Fetch the first matching Period object for the user and period_date
+        period = Period.objects.filter(user=user, period_date=period_date).first()
+
+        if not period:
             return Response({"detail": "Period not found for the user."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Loop through the symptoms and create SymptomTrack entries
-        for symptom_id in symptoms:
-            try:
-                symptom = Symptom.objects.get(id=symptom_id)
-            except Symptom.DoesNotExist:
-                return Response({"detail": f"Symptom with ID {symptom_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+        # Use a transaction to ensure all or nothing is saved
+        with transaction.atomic():
+            symptom_tracks = []  # Collect objects to bulk create
+            for symptom_id in symptoms:
+                try:
+                    symptom = Symptom.objects.get(id=symptom_id)
+                    symptom_tracks.append(SymptomTrack(user=user, period=period, symptom=symptom))
+                except Symptom.DoesNotExist:
+                    return Response({"detail": f"Symptom with ID {symptom_id} not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Create the SymptomTrack object
-            SymptomTrack.objects.create(user=user, period=period, symptom=symptom)
+            # Bulk create for efficiency
+            SymptomTrack.objects.bulk_create(symptom_tracks)
 
         return Response({"detail": "Symptoms logged successfully."}, status=status.HTTP_201_CREATED)
     
