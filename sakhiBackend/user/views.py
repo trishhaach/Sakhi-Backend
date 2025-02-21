@@ -338,7 +338,7 @@ class NonClinicalDetectionView(APIView):
                         prediction_probability=prediction_probability
                     )
 
-                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else ""
+                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else "Congratulations! You are not prone to PCOS. Maintain a healthy lifestyle and stay aware."
 
                     return Response({
                         'msg': 'Non-Clinical Detection successful',
@@ -537,7 +537,7 @@ class AdvancedDetectionView(APIView):
                         prediction="PCOS Detected" if predicted_class == 1 else "No PCOS Detected",
                     )
 
-                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else ""
+                    message = "Please consult with the nearest gynecologist or hospital." if predicted_class == 1 else "Congratulations! You are not prone to PCOS. Maintain a healthy lifestyle and stay aware."
 
                     return Response({
                         'msg': 'Advanced Detection successful',
